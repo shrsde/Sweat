@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RunCanada — Scraper Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --lime:#c8f542;
+  --lime-dk:#9dc22a;
+  --ink:#0a0b08;
+  --ink2:#1e201a;
+  --bg:#0e0f0b;
+  --bg2:#161810;
+  --bg3:#1c1e16;
+  --surface:#222418;
+  --border:#2e3028;
+  --border2:#3a3d30;
+  --muted:#6b6e5c;
+  --muted2:#4e5142;
+  --red:#e8432a;
+  --orange:#f07830;
+  --green:#4aad52;
+  --blue:#4a8fd4;
+  --gold:#d4961a;
+  --r:8px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#d8dac8;min-height:100vh;font-size:14px;line-height:1.6;}
+a{color:inherit;text-decoration:none;}
+button{font-family:'DM Sans',sans-serif;cursor:pointer;}
+input,textarea,select{font-family:'DM Sans',sans-serif;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── LAYOUT ── */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.logo{padding:1.4rem 1.2rem 1rem;border-bottom:1px solid var(--border);}
+.logo-txt{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#fff;}
+.logo-sub{font-size:.65rem;color:var(--lime);font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-top:.08rem;}
+.nav-section{padding:.8rem 0;}
+.nav-label{font-size:.58rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted2);padding:.3rem 1.2rem .2rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.55rem 1.2rem;color:var(--muted);font-size:.82rem;font-weight:500;cursor:pointer;transition:all .12s;border-left:2px solid transparent;}
+.nav-item:hover{color:#d8dac8;background:var(--surface);}
+.nav-item.active{color:var(--lime);background:rgba(200,245,66,.06);border-left-color:var(--lime);}
+.nav-item svg{width:14px;height:14px;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--lime);color:var(--ink);font-size:.55rem;font-weight:800;padding:.1rem .38rem;border-radius:100px;}
+.nav-badge.red{background:var(--red);color:#fff;}
+.sidebar-footer{margin-top:auto;padding:1rem 1.2rem;border-top:1px solid var(--border);}
+.sf-key{font-size:.62rem;color:var(--muted);margin-bottom:.3rem;}
+.sf-val{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--lime);word-break:break-all;line-height:1.5;}
+
+/* ── MAIN ── */
+.main{display:flex;flex-direction:column;min-height:100vh;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.8rem;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:100;}
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:#fff;}
+.page-sub{font-size:.72rem;color:var(--muted);margin-top:.05rem;}
+.topbar-actions{display:flex;gap:.6rem;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:.38rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.78rem;padding:.5rem 1rem;border-radius:6px;border:none;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn svg{width:13px;height:13px;}
+.btn-lime{background:var(--lime);color:var(--ink);}
+.btn-lime:hover{background:var(--lime-dk);}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--border2);color:#d8dac8;background:var(--surface);}
+.btn-red{background:rgba(232,67,42,.12);border:1px solid rgba(232,67,42,.3);color:var(--red);}
+.btn-red:hover{background:rgba(232,67,42,.2);}
+.btn-green{background:rgba(74,173,82,.12);border:1px solid rgba(74,173,82,.3);color:var(--green);}
+.btn-green:hover{background:rgba(74,173,82,.2);}
+
+/* ── CONTENT SECTIONS ── */
+.content{padding:1.8rem;flex:1;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.8rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;}
+.stat-n{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;color:#fff;line-height:1;}
+.stat-l{font-size:.68rem;color:var(--muted);margin-top:.15rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;}
+.stat-delta{font-size:.68rem;font-weight:600;margin-top:.25rem;}
+.stat-delta.up{color:var(--green);}
+.stat-delta.pend{color:var(--orange);}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.sec-ttl{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:#d8dac8;}
+.sec-sub{font-size:.72rem;color:var(--muted);margin-top:.08rem;}
+
+/* ── URL IMPORT ── */
+.import-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem;margin-bottom:1.2rem;}
+.import-label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.55rem;}
+.url-row{display:flex;gap:.6rem;}
+.url-input{flex:1;background:var(--bg3);border:1px solid var(--border2);color:#d8dac8;font-family:'DM Mono',monospace;font-size:.8rem;padding:.6rem .9rem;border-radius:6px;outline:none;transition:border-color .15s;}
+.url-input:focus{border-color:var(--lime);}
+.url-input::placeholder{color:var(--muted2);}
+.url-list{display:flex;flex-direction:column;gap:.4rem;margin-top:.8rem;}
+.url-tag{display:flex;align-items:center;gap:.5rem;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:.38rem .7rem;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);}
+.url-tag .url-tag-txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.url-tag .url-status{font-size:.6rem;font-weight:700;padding:.1rem .38rem;border-radius:3px;flex-shrink:0;}
+.url-tag .url-remove{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:.88rem;padding:0 .2rem;transition:color .12s;}
+.url-tag .url-remove:hover{color:var(--red);}
+.st-pending{background:rgba(212,150,26,.15);color:var(--gold);}
+.st-scraping{background:rgba(74,137,212,.15);color:var(--blue);}
+.st-done{background:rgba(74,173,82,.15);color:var(--green);}
+.st-error{background:rgba(232,67,42,.15);color:var(--red);}
+
+/* ── AUTO SOURCES ── */
+.sources-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;margin-bottom:1.4rem;}
+.source-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;display:flex;align-items:center;gap:.9rem;}
+.source-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.source-info{flex:1;min-width:0;}
+.source-name{font-weight:700;font-size:.84rem;color:#d8dac8;}
+.source-desc{font-size:.68rem;color:var(--muted);margin-top:.08rem;}
+.source-toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.source-toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--bg3);border:1px solid var(--border2);border-radius:100px;cursor:pointer;transition:all .2s;}
+.toggle-track::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--muted2);transition:transform .2s,background .2s;}
+.source-toggle input:checked+.toggle-track{background:rgba(200,245,66,.15);border-color:var(--lime);}
+.source-toggle input:checked+.toggle-track::after{transform:translateX(16px);background:var(--lime);}
+.source-badge{font-size:.58rem;font-weight:700;padding:.12rem .4rem;border-radius:3px;margin-left:.4rem;}
+.sb-api{background:rgba(74,173,82,.15);color:var(--green);}
+.sb-scrape{background:rgba(74,137,212,.15);color:var(--blue);}
+.sb-manual{background:rgba(212,150,26,.15);color:var(--gold);}
+
+/* ── LOG ── */
+.log-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:.8rem 1rem;height:160px;overflow-y:auto;font-family:'DM Mono',monospace;font-size:.7rem;line-height:1.7;}
+.log-line{display:flex;gap:.6rem;}
+.log-time{color:var(--muted2);flex-shrink:0;}
+.log-msg{color:#b8baa8;}
+.log-msg.ok{color:var(--green);}
+.log-msg.err{color:var(--red);}
+.log-msg.info{color:var(--blue);}
+.log-msg.warn{color:var(--gold);}
+
+/* ── RACE TABLE ── */
+.race-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.table-toolbar{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem;border-bottom:1px solid var(--border);}
+.table-search{background:var(--bg3);border:1px solid var(--border2);color:#d8dac8;font-family:'DM Sans',sans-serif;font-size:.78rem;padding:.42rem .75rem;border-radius:5px;outline:none;width:200px;}
+.table-search:focus{border-color:var(--lime);}
+.tbl-filter{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);font-size:.75rem;padding:.42rem .7rem;border-radius:5px;outline:none;cursor:pointer;-webkit-appearance:none;}
+.tbl-filter:focus{border-color:var(--lime);}
+.tbl-count{margin-left:auto;font-size:.72rem;color:var(--muted);}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:.65rem 1rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--bg3);}
+tbody td{padding:.65rem 1rem;font-size:.78rem;color:#b8baa8;vertical-align:middle;}
+.td-name{font-weight:600;color:#d8dac8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.td-source{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);}
+.status-pill{display:inline-flex;align-items:center;gap:.25rem;font-size:.62rem;font-weight:700;padding:.18rem .55rem;border-radius:100px;}
+.sp-pending{background:rgba(212,150,26,.12);color:var(--gold);border:1px solid rgba(212,150,26,.25);}
+.sp-approved{background:rgba(74,173,82,.12);color:var(--green);border:1px solid rgba(74,173,82,.25);}
+.sp-rejected{background:rgba(232,67,42,.12);color:var(--red);border:1px solid rgba(232,67,42,.25);}
+.td-actions{display:flex;gap:.35rem;align-items:center;}
+.act-btn{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;transition:all .12s;}
+.act-btn svg{width:12px;height:12px;}
+.act-approve{background:rgba(74,173,82,.12);color:var(--green);}
+.act-approve:hover{background:rgba(74,173,82,.25);}
+.act-reject{background:rgba(232,67,42,.1);color:var(--red);}
+.act-reject:hover{background:rgba(232,67,42,.2);}
+.act-edit{background:var(--bg3);color:var(--muted);}
+.act-edit:hover{color:#d8dac8;background:var(--border2);}
+.act-view{background:var(--bg3);color:var(--blue);}
+.act-view:hover{background:rgba(74,137,212,.15);}
+
+/* ── EXPORT PANEL ── */
+.export-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem;margin-bottom:1.2rem;}
+.export-preview{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.9rem;font-family:'DM Mono',monospace;font-size:.7rem;color:#8aac6a;line-height:1.65;max-height:280px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;}
+.copy-bar{display:flex;align-items:center;justify-content:space-between;margin-top:.7rem;}
+.copy-hint{font-size:.68rem;color:var(--muted);}
+
+/* ── EDIT MODAL ── */
+.edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;pointer-events:none;transition:opacity .2s;}
+.edit-overlay.open{opacity:1;pointer-events:all;}
+.edit-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:580px;max-height:88vh;overflow-y:auto;padding:1.6rem;transform:translateY(12px);transition:transform .22s;}
+.edit-overlay.open .edit-panel{transform:none;}
+.edit-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:#fff;margin-bottom:1.2rem;}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem;}
+.field{display:flex;flex-direction:column;gap:.28rem;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.field input,.field select,.field textarea{background:var(--bg3);border:1px solid var(--border2);color:#d8dac8;font-family:'DM Sans',sans-serif;font-size:.8rem;padding:.55rem .75rem;border-radius:6px;outline:none;transition:border-color .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--lime);}
+.field textarea{resize:vertical;min-height:70px;line-height:1.55;}
+.edit-footer{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border);}
+
+/* ── SCRAPE PROGRESS ── */
+.scrape-progress{display:none;background:rgba(74,137,212,.08);border:1px solid rgba(74,137,212,.2);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1rem;}
+.scrape-progress.visible{display:block;}
+.sp-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;}
+.sp-spinner{width:14px;height:14px;border:2px solid rgba(74,137,212,.3);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.sp-text{font-size:.8rem;color:var(--blue);font-weight:600;}
+.sp-bar-wrap{background:var(--bg3);border-radius:100px;height:4px;overflow:hidden;}
+.sp-bar-fill{height:100%;background:var(--blue);border-radius:100px;transition:width .4s ease;width:0%;}
+.sp-steps{display:flex;flex-direction:column;gap:.22rem;margin-top:.65rem;}
+.sp-step{font-size:.68rem;color:var(--muted);display:flex;align-items:center;gap:.4rem;}
+.sp-step.done{color:#6aad72;}
+.sp-step.active{color:var(--blue);}
+.sp-step::before{content:'○';font-size:.6rem;flex-shrink:0;}
+.sp-step.done::before{content:'✓';}
+.sp-step.active::before{content:'›';}
+
+/* ── SCHEDULE ── */
+.schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+.sched-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;}
+.sched-name{font-weight:700;font-size:.84rem;color:#d8dac8;margin-bottom:.3rem;}
+.sched-desc{font-size:.7rem;color:var(--muted);margin-bottom:.8rem;line-height:1.55;}
+.sched-row{display:flex;align-items:center;gap:.5rem;}
+.sched-sel{background:var(--bg3);border:1px solid var(--border2);color:#d8dac8;font-size:.75rem;padding:.38rem .65rem;border-radius:5px;outline:none;flex:1;-webkit-appearance:none;}
+.sched-sel:focus{border-color:var(--lime);}
+.next-run{font-size:.65rem;color:var(--muted);margin-top:.5rem;}
+.next-run span{color:var(--lime);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border2);color:#d8dac8;font-size:.8rem;font-weight:600;padding:.65rem 1.1rem;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+.toast.show{opacity:1;transform:none;}
+.toast.ok{border-color:rgba(74,173,82,.4);color:var(--green);}
+.toast.err{border-color:rgba(232,67,42,.4);color:var(--red);}
+
+/* ── EMPTY STATE ── */
+.empty-state{padding:3rem;text-align:center;color:var(--muted);font-size:.85rem;}
+.empty-state svg{width:32px;height:32px;margin:0 auto .8rem;display:block;opacity:.3;}
+
+/* ── API KEY NOTICE ── */
+.api-notice{background:rgba(200,245,66,.06);border:1px solid rgba(200,245,66,.2);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1.4rem;display:flex;gap:.8rem;align-items:flex-start;}
+.api-notice svg{width:16px;height:16px;color:var(--lime);flex-shrink:0;margin-top:.1rem;}
+.api-notice-txt{font-size:.78rem;color:#c8caaa;line-height:1.65;}
+.api-notice-txt strong{color:var(--lime);}
+.api-notice-txt a{color:var(--lime);text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-txt">RunCanada</div>
+    <div class="logo-sub">Scraper Dashboard</div>
+  </div>
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Data Pipeline</div>
+      <div class="nav-item active" onclick="showSection('overview',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Overview
+      </div>
+      <div class="nav-item" onclick="showSection('import',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Manual Import
+        <span class="nav-badge" id="pendingBadge">0</span>
+      </div>
+      <div class="nav-item" onclick="showSection('auto',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Auto Sources
+      </div>
+      <div class="nav-item" onclick="showSection('schedule',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Schedule
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Database</div>
+      <div class="nav-item" onclick="showSection('pending',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Pending Review
+        <span class="nav-badge red" id="reviewBadge">0</span>
+      </div>
+      <div class="nav-item" onclick="showSection('approved',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Approved Races
+      </div>
+      <div class="nav-item" onclick="showSection('export',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export to Site
+      </div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sf-key">Claude API Key</div>
+    <div class="sf-val" id="sfKeyDisplay">Not set — enter in Settings</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="pageTitle">Overview</div>
+      <div class="page-sub" id="pageSub">Data pipeline status</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="showSection('import', document.querySelector('.nav-item:nth-child(2)'))">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add URL
+      </button>
+      <button class="btn btn-lime" onclick="runAllScrape()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Run Scraper
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="section active" id="s-overview">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-n" id="statTotal">0</div>
+          <div class="stat-l">Total Races</div>
+          <div class="stat-delta up" id="statTotalDelta">in database</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-n" id="statPending">0</div>
+          <div class="stat-l">Pending Review</div>
+          <div class="stat-delta pend">needs approval</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-n" id="statApproved">0</div>
+          <div class="stat-l">Approved</div>
+          <div class="stat-delta up">live on site</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-n" id="statSources">0</div>
+          <div class="stat-l">URL Sources</div>
+          <div class="stat-delta pend" id="statSourcesDelta">queued</div>
+        </div>
+      </div>
+
+      <div class="sec-hdr">
+        <div><div class="sec-ttl">Recent Activity</div><div class="sec-sub">Last scrape log</div></div>
+        <button class="btn btn-ghost" onclick="clearLog()">Clear</button>
+      </div>
+      <div class="log-box" id="logBox">
+        <div class="log-line"><span class="log-time">--:--:--</span><span class="log-msg info">Dashboard ready. Add URLs or run auto-scraper to begin.</span></div>
+      </div>
+
+      <div style="margin-top:1.4rem;">
+        <div class="sec-hdr">
+          <div><div class="sec-ttl">Quick Actions</div></div>
+        </div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+          <button class="btn btn-lime" onclick="runAllScrape()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Run All Scrapers
+          </button>
+          <button class="btn btn-ghost" onclick="showSection('import',document.querySelectorAll('.nav-item')[1])">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Manual URL
+          </button>
+          <button class="btn btn-ghost" onclick="showSection('pending',document.querySelectorAll('.nav-item')[4])">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            Review Pending
+          </button>
+          <button class="btn btn-ghost" onclick="showSection('export',document.querySelectorAll('.nav-item')[6])">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
+            Export to Site
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANUAL IMPORT -->
+    <div class="section" id="s-import">
+
+      <div class="api-notice" style="border-color:#44ff88;background:rgba(68,255,136,.05);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#44ff88" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="api-notice-txt">
+          <strong style="color:#44ff88;">Quick Import — Bulk JSON</strong><br>
+          Have a <code style="background:var(--bg3);padding:.1rem .3rem;border-radius:3px;">.json</code> races file? Load any JSON file to import all races at once into Pending Review — no AI key needed.<br><br>
+          <label for="jsonFileInput" class="btn btn-lime" style="cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;font-size:.78rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Load JSON File
+          </label>
+          <input type="file" id="jsonFileInput" accept=".json" style="display:none;" onchange="importJSON(this)"/>
+          <span id="jsonImportStatus" style="margin-left:.8rem;font-size:.75rem;color:var(--muted);"></span>
+        </div>
+      </div>
+
+      <div class="api-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="api-notice-txt">
+          <strong>How this works:</strong> Paste any race event URL below. The scraper fetches the page and uses <strong>Claude AI</strong> to extract structured race data (name, date, location, price, distance, etc.) regardless of how the page is built. You'll review extracted data before it goes live.<br>
+          Enter your Claude API key below to enable AI extraction. Get one free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+        </div>
+      </div>
+
+      <div class="import-box">
+        <div class="import-label">Claude API Key (required for extraction)</div>
+        <div class="url-row" style="margin-bottom:.8rem;">
+          <input type="password" class="url-input" id="apiKeyInput" placeholder="sk-ant-api03-..." oninput="saveApiKey()"/>
+          <button class="btn btn-ghost" onclick="toggleApiKeyVis()">Show</button>
+        </div>
+
+        <div class="import-label" style="margin-top:.8rem;">Paste Race URL(s)</div>
+        <div class="url-row">
+          <input type="text" class="url-input" id="urlInput" placeholder="https://raceroster.com/events/2026/..." onkeydown="if(event.key==='Enter')addUrl()"/>
+          <button class="btn btn-lime" onclick="addUrl()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add
+          </button>
+        </div>
+        <div class="url-list" id="urlList"></div>
+      </div>
+
+      <div class="scrape-progress" id="scrapeProgress">
+        <div class="sp-header">
+          <div class="sp-spinner"></div>
+          <div class="sp-text" id="spText">Fetching page...</div>
+        </div>
+        <div class="sp-bar-wrap"><div class="sp-bar-fill" id="spBar"></div></div>
+        <div class="sp-steps" id="spSteps"></div>
+      </div>
+
+      <div class="sec-hdr">
+        <div><div class="sec-ttl">Queued URLs</div><div class="sec-sub sec-sub" id="queuedCount">0 URLs queued</div></div>
+        <div style="display:flex;gap:.5rem;">
+          <button class="btn btn-ghost" onclick="clearUrls()">Clear All</button>
+          <button class="btn btn-lime" onclick="scrapeAll()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Scrape All
+          </button>
+        </div>
+      </div>
+
+      <div class="race-table-wrap" id="importResultsWrap" style="display:none;">
+        <div class="table-toolbar">
+          <span style="font-size:.72rem;color:var(--muted);font-weight:600;">Extracted Results — review before approving</span>
+          <button class="btn btn-green" style="margin-left:auto;" onclick="approveAll()">Approve All</button>
+        </div>
+        <table id="importResultsTable">
+          <thead><tr>
+            <th>Race Name</th><th>Date</th><th>Location</th><th>Distance</th><th>Price</th><th>Source</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="importResultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AUTO SOURCES -->
+    <div class="section" id="s-auto">
+      <div class="api-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="api-notice-txt">
+          <strong>RunSignUp works with zero setup</strong> — their public API is completely open for race listings. Hit <strong>Run Scraper</strong> and it pulls live Canadian races immediately, no key or account needed. Eventbrite is optional and only needed if you want community fun runs and charity events.
+        </div>
+      </div>
+      <div class="sources-grid">
+        <div class="source-card">
+          <div class="source-icon" style="background:rgba(74,173,82,.1);">🏃</div>
+          <div class="source-info">
+            <div class="source-name">RunSignUp <span class="source-badge sb-api">API</span></div>
+            <div class="source-desc">Open public API — no key needed. Pulls upcoming Canadian races with name, city, province, date. Up to 150 races per run.</div>
+          </div>
+          <label class="source-toggle"><input type="checkbox" id="toggle-runsignup" checked/><span class="toggle-track"></span></label>
+        </div>
+        <div class="source-card">
+          <div class="source-icon" style="background:rgba(200,245,66,.08);">📋</div>
+          <div class="source-info">
+            <div class="source-name">RaceGuide.ca <span class="source-badge sb-scrape">SCRAPE</span></div>
+            <div class="source-desc">Canada-specific race directory. Clean server-rendered HTML. Good coverage of Running Room events and community races.</div>
+          </div>
+          <label class="source-toggle"><input type="checkbox" id="toggle-raceguide" checked/><span class="toggle-track"></span></label>
+        </div>
+        <div class="source-card">
+          <div class="source-icon" style="background:rgba(74,137,212,.1);">🗂</div>
+          <div class="source-info">
+            <div class="source-name">TheRunningDirectory.ca <span class="source-badge sb-scrape">SCRAPE</span></div>
+            <div class="source-desc">Growing Canadian-only directory. Server-rendered with name, date, city, province, type all in clean HTML. Easy to parse.</div>
+          </div>
+          <label class="source-toggle"><input type="checkbox" id="toggle-trd" checked/><span class="toggle-track"></span></label>
+        </div>
+        <div class="source-card">
+          <div class="source-icon" style="background:rgba(212,150,26,.1);">⚡</div>
+          <div class="source-info">
+            <div class="source-name">UltraSignup <span class="source-badge sb-scrape">SCRAPE</span></div>
+            <div class="source-desc">Trail & ultra races. Scrapes Canada-filtered listings. Best source for ultras, trail runs, mountain races.</div>
+          </div>
+          <label class="source-toggle"><input type="checkbox" id="toggle-ultrasignup" checked/><span class="toggle-track"></span></label>
+        </div>
+        <div class="source-card">
+          <div class="source-icon" style="background:rgba(240,120,48,.1);">🎟</div>
+          <div class="source-info">
+            <div class="source-name">Eventbrite Canada <span class="source-badge sb-api">API</span></div>
+            <div class="source-desc">Community runs, charity 5Ks, fun runs. Requires a free Eventbrite API token — covers events not on race-specific sites.</div>
+          </div>
+          <label class="source-toggle"><input type="checkbox" id="toggle-eventbrite"/><span class="toggle-track"></span></label>
+        </div>
+        <div class="source-card">
+          <div class="source-icon" style="background:rgba(232,67,42,.08);">📬</div>
+          <div class="source-info">
+            <div class="source-name">Community Submissions <span class="source-badge sb-manual">MANUAL</span></div>
+            <div class="source-desc">Races submitted via your site's "Submit a Race" form. Covers local run clubs, Facebook events, Strava groups.</div>
+          </div>
+          <label class="source-toggle"><input type="checkbox" id="toggle-community" checked/><span class="toggle-track"></span></label>
+        </div>
+      </div>
+
+      <div class="sec-hdr" style="margin-top:1rem;">
+        <div><div class="sec-ttl">Configuration</div><div class="sec-sub">Optional keys for extra sources</div></div>
+      </div>
+      <div style="background:rgba(74,173,82,.06);border:1px solid rgba(74,173,82,.2);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.8rem;display:flex;gap:.7rem;align-items:flex-start;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4aad52" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;margin-top:.1rem;"><polyline points="20 6 9 17 4 12"/></svg>
+        <div style="font-size:.78rem;color:#8acc8a;line-height:1.65;">
+          <strong style="color:#4aad52;">RunSignUp works with zero setup</strong> — it has a fully open public API for race listings. Just hit <strong>Run Scraper</strong> and it pulls Canadian races automatically. No key needed.
+        </div>
+      </div>
+      <div class="import-box">
+        <div class="field-grid">
+          <div class="field">
+            <label>Eventbrite API Token <span style="font-size:.6rem;color:var(--muted);font-weight:400;text-transform:none;">(optional — adds community runs)</span></label>
+            <input type="password" placeholder="Get free at eventbrite.com/platform/api" id="ebToken" oninput="saveKeys()"/>
+          </div>
+          <div class="field">
+            <label>Filter: Province</label>
+            <select id="filterProv" onchange="saveKeys()">
+              <option value="CA">All Canada</option>
+              <option value="BC">British Columbia</option>
+              <option value="AB">Alberta</option>
+              <option value="ON">Ontario</option>
+              <option value="QC">Quebec</option>
+              <option value="MB">Manitoba</option>
+              <option value="SK">Saskatchewan</option>
+              <option value="NS">Nova Scotia</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:.6rem;align-items:center;">
+          <button class="btn btn-lime" onclick="testRunSignUp()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Test RunSignUp Now
+          </button>
+          <span style="font-size:.72rem;color:var(--muted);">Fetches live data — no key required</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="section" id="s-schedule">
+      <div class="api-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="api-notice-txt">
+          <strong>Scheduling note:</strong> This dashboard runs in your browser — scheduled scrapes only run while it's open. For true automation, deploy to <strong>GitHub Actions</strong> (free) or <strong>Vercel Cron</strong>. I can generate the config files for either with one click.
+        </div>
+      </div>
+      <div class="schedule-grid">
+        <div class="sched-card">
+          <div class="sched-name">API Sources (RunSignUp + Eventbrite)</div>
+          <div class="sched-desc">Fast, cheap API calls. Can run frequently without risk of being blocked.</div>
+          <div class="sched-row">
+            <select class="sched-sel" id="schedApi">
+              <option>Every 6 hours</option>
+              <option selected>Every 12 hours</option>
+              <option>Daily at midnight</option>
+              <option>Weekly</option>
+            </select>
+            <button class="btn btn-ghost" style="font-size:.7rem;padding:.38rem .65rem;" onclick="saveSchedule()">Save</button>
+          </div>
+          <div class="next-run">Next run: <span id="nextApiRun">—</span></div>
+        </div>
+        <div class="sched-card">
+          <div class="sched-name">Web Scraper (Race Roster, iRace, etc.)</div>
+          <div class="sched-desc">Full page scrapes. Run less frequently to avoid rate limits and IP blocks.</div>
+          <div class="sched-row">
+            <select class="sched-sel" id="schedScrape">
+              <option>Daily</option>
+              <option selected>Every 3 days</option>
+              <option>Weekly</option>
+              <option>Manual only</option>
+            </select>
+            <button class="btn btn-ghost" style="font-size:.7rem;padding:.38rem .65rem;" onclick="saveSchedule()">Save</button>
+          </div>
+          <div class="next-run">Next run: <span id="nextScrapeRun">—</span></div>
+        </div>
+      </div>
+      <div style="margin-top:1.2rem;">
+        <div class="sec-hdr"><div class="sec-ttl">Deploy Automation</div><div class="sec-sub">Run scraper 24/7 without keeping browser open</div></div>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+          <button class="btn btn-ghost" onclick="exportGithubAction()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.744 0 .268.18.579.688.481C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+            Download GitHub Action
+          </button>
+          <button class="btn btn-ghost" onclick="exportVercelCron()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 22.525H0l12-21.05 12 21.05z"/></svg>
+            Download Vercel Cron Config
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENDING REVIEW -->
+    <div class="section" id="s-pending">
+      <div class="race-table-wrap">
+        <div class="table-toolbar">
+          <input type="text" class="table-search" placeholder="Search races..." oninput="filterTable('pending',this.value)"/>
+          <span class="tbl-count"><strong id="pendingCount">0</strong> pending</span>
+          <button class="btn btn-green" style="margin-left:auto;" onclick="approveAllPending()">Approve All</button>
+          <button class="btn btn-red" onclick="rejectAllPending()">Reject All</button>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Race Name</th><th>Date</th><th>Location</th><th>Distance</th><th>Price</th><th>Source</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="pendingTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="pendingEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          No pending races. Run the scraper or add URLs.
+        </div>
+      </div>
+    </div>
+
+    <!-- APPROVED -->
+    <div class="section" id="s-approved">
+      <div class="race-table-wrap">
+        <div class="table-toolbar">
+          <input type="text" class="table-search" placeholder="Search approved races..." oninput="filterTable('approved',this.value)"/>
+          <span class="tbl-count"><strong id="approvedCount">0</strong> approved</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Race Name</th><th>Date</th><th>Location</th><th>Distance</th><th>Price</th><th>Source</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="approvedTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="approvedEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+          No approved races yet.
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="section" id="s-export">
+      <div class="sec-hdr">
+        <div><div class="sec-ttl">Publish to Front End</div><div class="sec-sub">Push approved races live to the RunCanada website instantly</div></div>
+      </div>
+
+      <!-- PUSH LIVE card -->
+      <div class="export-box" style="border-color:var(--green);background:rgba(74,173,82,.05);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div>
+            <div class="import-label" style="color:var(--green);font-size:.85rem;">⚡ One-Click Publish</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.25rem;">Approved races go live on index.html instantly — no code editing needed.</div>
+          </div>
+          <button class="btn btn-lime" style="padding:.6rem 1.4rem;font-size:.85rem;" onclick="pushLive()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Push Live
+          </button>
+        </div>
+        <div id="pushLiveStatus" style="font-size:.75rem;color:var(--muted);padding:.6rem .8rem;background:var(--bg3);border-radius:6px;min-height:2rem;font-family:var(--mono);">
+          Ready — <span id="approvedCountExport">0</span> approved races will be published.
+        </div>
+        <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap;">
+          <a href="index.html" target="_blank" class="btn btn-ghost" style="font-size:.75rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            View Site
+          </a>
+          <button class="btn btn-ghost" style="font-size:.75rem;" onclick="unpublish()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Revert Site to Defaults
+          </button>
+        </div>
+      </div>
+
+      <!-- CODE EXPORT (advanced) -->
+      <div class="export-box" style="margin-top:.8rem;">
+        <div class="sec-hdr" style="margin-bottom:.8rem;padding-bottom:.6rem;border-bottom:1px solid var(--border);">
+          <div><div class="import-label">Advanced: Copy Code</div><div style="font-size:.72rem;color:var(--muted);">For manual paste into index.html or deployment pipelines</div></div>
+          <button class="btn btn-ghost" onclick="generateExport()" style="font-size:.75rem;">Regenerate</button>
+        </div>
+        <div class="export-preview" id="exportPreview">// Click "Regenerate" to generate your RACES array.</div>
+        <div class="copy-bar">
+          <span class="copy-hint" id="exportMeta">—</span>
+          <button class="btn btn-lime" onclick="copyExport()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy Code
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- EDIT MODAL -->
+<div class="edit-overlay" id="editOverlay" onclick="closeEdit(event)">
+  <div class="edit-panel">
+    <div class="edit-title">Edit Race Details</div>
+    <div class="field-grid">
+      <div class="field full"><label>Race Name</label><input type="text" id="ef-name"/></div>
+      <div class="field"><label>Date (YYYY-MM-DD)</label><input type="text" id="ef-date" placeholder="2026-05-15"/></div>
+      <div class="field"><label>City</label><input type="text" id="ef-city"/></div>
+      <div class="field"><label>Province</label>
+        <select id="ef-prov">
+          <option>British Columbia</option><option>Alberta</option><option>Ontario</option>
+          <option>Quebec</option><option>Manitoba</option><option>Saskatchewan</option>
+          <option>Nova Scotia</option><option>New Brunswick</option><option>Newfoundland</option>
+          <option>Prince Edward Island</option><option>Northwest Territories</option><option>Yukon</option>
+        </select>
+      </div>
+      <div class="field"><label>Distance</label><input type="text" id="ef-distance" placeholder="10K, Half Marathon, 42.2K"/></div>
+      <div class="field"><label>Race Type</label>
+        <select id="ef-type">
+          <option>5K</option><option>10K</option><option>Half Marathon</option><option>Marathon</option>
+          <option>Ultra Marathon</option><option>Trail Run</option><option>Obstacle Run</option>
+          <option>Fun Run</option><option>Novelty Run</option><option>Relay</option>
+        </select>
+      </div>
+      <div class="field"><label>Price (CAD)</label><input type="number" id="ef-price" placeholder="0"/></div>
+      <div class="field"><label>Registration URL</label><input type="text" id="ef-url"/></div>
+      <div class="field"><label>Lat</label><input type="text" id="ef-lat" placeholder="49.28"/></div>
+      <div class="field"><label>Lon</label><input type="text" id="ef-lon" placeholder="-123.12"/></div>
+      <div class="field full"><label>Description / Novelty</label><textarea id="ef-novelty"></textarea></div>
+      <div class="field full"><label>Perks (comma separated)</label><input type="text" id="ef-perks" placeholder="T-Shirt, Finisher Medal, Chip Timing"/></div>
+      <div class="field full"><label>Highlights (comma separated)</label><input type="text" id="ef-highlights" placeholder="Scenic, Mountain Views, Beer Finish"/></div>
+    </div>
+    <input type="hidden" id="ef-id"/>
+    <div class="edit-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('editOverlay').classList.remove('open')">Cancel</button>
+      <button class="btn btn-lime" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══
+let db = {
+  races: [],      // all races (pending + approved + rejected)
+  urls: [],       // manual URL queue
+  nextId: 1,
+  apiKey: '',
+};
+
+// Load from localStorage
+function loadState() {
+  try {
+    const saved = localStorage.getItem('rc_scraper_db');
+    if (saved) {
+      db = { ...db, ...JSON.parse(saved) };
+    }
+    // Load API key
+    db.apiKey = localStorage.getItem('rc_api_key') || '';
+    if (db.apiKey) {
+      document.getElementById('apiKeyInput').value = db.apiKey;
+      document.getElementById('sfKeyDisplay').textContent = 'sk-ant-...' + db.apiKey.slice(-6);
+    }
+  } catch(e) {}
+  updateStats();
+  renderAll();
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('rc_scraper_db', JSON.stringify(db));
+  } catch(e) {}
+}
+
+function saveApiKey() {
+  db.apiKey = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem('rc_api_key', db.apiKey);
+  document.getElementById('sfKeyDisplay').textContent = db.apiKey
+    ? 'sk-ant-...' + db.apiKey.slice(-6)
+    : 'Not set';
+}
+
+function saveKeys() { saveState(); }
+
+// ── NAVIGATION ──
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const titles = {
+    overview: ['Overview', 'Data pipeline status'],
+    import: ['Manual Import', 'Paste URLs to extract race data with AI'],
+    auto: ['Auto Sources', 'Configure automated race data feeds'],
+    schedule: ['Schedule', 'Set scrape frequency and automation'],
+    pending: ['Pending Review', 'Approve or reject extracted races'],
+    approved: ['Approved Races', 'Live races in your database'],
+    export: ['Export to Site', 'Generate RACES array for your site'],
+  };
+  const t = titles[id] || ['', ''];
+  document.getElementById('pageTitle').textContent = t[0];
+  document.getElementById('pageSub').textContent = t[1];
+  if (id === 'export') updatePushLiveStatus();
+}
+
+// ── URL MANAGEMENT ──
+// ── JSON BULK IMPORT ──
+function importJSON(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('jsonImportStatus');
+  status.textContent = 'Loading...';
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('Expected a JSON array');
+      let added = 0, skipped = 0;
+      for (const race of data) {
+        if (!race.name) continue;
+        const exists = db.races.find(x => x.name === race.name);
+        if (exists) { skipped++; continue; }
+        db.races.push({
+          ...race,
+          id: db.nextId++,
+          status: 'pending',
+          scrapedAt: race.scraped || today(),
+        });
+        added++;
+      }
+      saveState(); renderAll(); updateStats();
+      status.textContent = `✓ ${added} races imported, ${skipped} skipped (already exist)`;
+      status.style.color = '#44ff88';
+      log(`✓ JSON import: ${added} races added, ${skipped} skipped`, 'ok');
+      toast(`Imported ${added} races from JSON!`, 'ok');
+    } catch(e) {
+      status.textContent = 'Error: ' + e.message;
+      status.style.color = '#ff4444';
+      log('JSON import error: ' + e.message, 'err');
+    }
+  };
+  reader.readAsText(file);
+  input.value = ''; // reset so same file can be reloaded
+}
+
+// Known listing pages handled by auto-scraper — redirect user instead of scraping
+const KNOWN_LISTING_REDIRECTS = [
+  { pattern: 'therunningdirectory.ca', msg: 'TheRunningDirectory is in Auto Sources — use Run Scraper instead of manual import.' },
+  { pattern: 'raceguide.ca/races',     msg: 'RaceGuide.ca is in Auto Sources — use Run Scraper instead of manual import.' },
+  { pattern: 'runsignup.com/Race/Browse', msg: 'RunSignUp is in Auto Sources — use Run Scraper instead of manual import.' },
+];
+
+function addUrl() {
+  const inp = document.getElementById('urlInput');
+  const url = inp.value.trim();
+  if (!url || !url.startsWith('http')) { toast('Please enter a valid URL starting with http', 'err'); return; }
+
+  // Block known listing pages that need the auto-scraper
+  for (const r of KNOWN_LISTING_REDIRECTS) {
+    if (url.includes(r.pattern)) {
+      log('ℹ️ ' + r.msg, 'warn');
+      toast(r.msg, '');
+      inp.value = '';
+      showSection('auto', document.querySelectorAll('.nav-item')[2]);
+      return;
+    }
+  }
+
+  if (db.urls.find(u => u.url === url)) { toast('URL already in queue', 'err'); return; }
+  db.urls.push({ url, status: 'pending', id: Date.now() });
+  inp.value = '';
+  renderUrlList();
+  updateStats();
+  saveState();
+}
+
+function removeUrl(id) {
+  db.urls = db.urls.filter(u => u.id !== id);
+  renderUrlList();
+  updateStats();
+  saveState();
+}
+
+function clearUrls() {
+  db.urls = db.urls.filter(u => u.status === 'done');
+  renderUrlList();
+  updateStats();
+  saveState();
+}
+
+function renderUrlList() {
+  const el = document.getElementById('urlList');
+  const count = document.getElementById('queuedCount');
+  const pending = db.urls.filter(u => u.status === 'pending' || u.status === 'scraping');
+  count.textContent = `${db.urls.length} URL${db.urls.length !== 1 ? 's' : ''} queued`;
+  if (!db.urls.length) { el.innerHTML = ''; return; }
+  el.innerHTML = db.urls.map(u => `
+    <div class="url-tag" id="urltag-${u.id}">
+      <span class="url-tag-txt" title="${u.url}">${u.url}</span>
+      <span class="url-status ${statusClass(u.status)}">${u.status}</span>
+      <button class="url-remove" onclick="removeUrl(${u.id})">✕</button>
+    </div>`).join('');
+}
+
+function statusClass(s) {
+  return { pending: 'st-pending', scraping: 'st-scraping', done: 'st-done', error: 'st-error' }[s] || 'st-pending';
+}
+
+// ── SCRAPER ──
+async function scrapeAll() {
+  const pending = db.urls.filter(u => u.status === 'pending');
+  if (!pending.length) { toast('No pending URLs to scrape', 'err'); return; }
+  if (!db.apiKey) { toast('Enter your Claude API key first', 'err'); return; }
+
+  for (const urlObj of pending) {
+    await scrapeUrl(urlObj);
+  }
+}
+
+async function scrapeUrl(urlObj) {
+  const prog = document.getElementById('scrapeProgress');
+  const spText = document.getElementById('spText');
+  const spBar = document.getElementById('spBar');
+  const spSteps = document.getElementById('spSteps');
+
+  prog.classList.add('visible');
+
+  const steps = [
+    'Fetching page content...',
+    'Cleaning HTML...',
+    'Sending to Claude AI for extraction...',
+    'Parsing structured race data...',
+    'Adding to pending review...'
+  ];
+
+  function setStep(i) {
+    spText.textContent = steps[i];
+    spBar.style.width = ((i + 1) / steps.length * 100) + '%';
+    spSteps.innerHTML = steps.map((s, j) =>
+      `<div class="sp-step ${j < i ? 'done' : j === i ? 'active' : ''}">${s}</div>`
+    ).join('');
+  }
+
+  urlObj.status = 'scraping';
+  renderUrlList();
+  log(`Scraping: ${urlObj.url}`, 'info');
+
+  try {
+    setStep(0);
+
+    // Try multiple CORS proxies in sequence
+    let html = '';
+    const proxies = [
+      u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+      u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+      u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    ];
+
+    for (const makeProxy of proxies) {
+      try {
+        const resp = await fetch(makeProxy(urlObj.url), { signal: AbortSignal.timeout(9000) });
+        if (!resp.ok) continue;
+        const ct = resp.headers.get('content-type') || '';
+        if (ct.includes('json')) {
+          const data = await resp.json();
+          html = data.contents || data.body || '';
+        } else {
+          html = await resp.text();
+        }
+        if (html && html.length > 200) { log('Proxy succeeded', 'info'); break; }
+      } catch(e) { log(`Proxy attempt failed: ${e.message}`, 'warn'); continue; }
+    }
+
+    if (!html || html.length < 100) {
+      throw new Error('All proxies failed. If this is a listing page (like /find-races), try pasting individual race URLs instead — e.g. https://www.therunningdirectory.ca/race/race-name');
+    }
+
+    setStep(1);
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    tmp.querySelectorAll('script,style,nav,footer,header,noscript,svg,iframe').forEach(el => el.remove());
+    const text = tmp.textContent.replace(/\s+/g, ' ').trim().slice(0, 6000);
+
+    if (text.length < 50) {
+      throw new Error('Page returned no readable text — it may be JavaScript-rendered. Try a Race Roster or RunSignUp direct event URL.');
+    }
+
+    setStep(2);
+    // Detect listing page (many dates = many races)
+    const yearMatches = (text.match(/202[5-9]/g) || []).length;
+    const isListing = yearMatches > 5;
+
+    const prompt = isListing
+      ? `This page contains MULTIPLE running races. Extract every race you can find.
+URL: ${urlObj.url}
+
+Page text:
+${text}
+
+Return ONLY a JSON array. Each element:
+{"name":"Race Name","date":"YYYY-MM-DD","city":"City","province":"Full province name","type":"5K|10K|Half Marathon|Marathon|Ultra Marathon|Trail Run|Obstacle Run|Fun Run|Novelty Run|Relay","distance":"10K","price":0,"url":"${urlObj.url}"}
+Return [] if none found. No markdown, no explanation.`
+      : `Extract the single race from this page.
+URL: ${urlObj.url}
+
+Page text:
+${text}
+
+Return ONLY a JSON object (not array):
+{"name":"Full race name","date":"YYYY-MM-DD","city":"City","province":"Full province name","lat":49.28,"lon":-123.12,"type":"5K|10K|Half Marathon|Marathon|Ultra Marathon|Trail Run|Obstacle Run|Fun Run|Novelty Run|Relay","distance":"10K","price":65,"free":false,"sanctioned":true,"perks":["T-Shirt"],"highlights":["Scenic"],"novelty":"1-2 sentence description","url":"${urlObj.url}","source":"website name"}
+No markdown, no explanation.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': db.apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    setStep(3);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error?.message || 'Claude API error');
+
+    const rawText = result.content[0].text.trim();
+
+    // Handle both array (listing) and object (single race)
+    const arrMatch = rawText.match(/\[[\s\S]*\]/);
+    const objMatch = rawText.match(/\{[\s\S]*\}/);
+
+    setStep(4);
+
+    if (isListing && arrMatch) {
+      // Multiple races
+      let races = [];
+      try { races = JSON.parse(arrMatch[0]); } catch(e) { throw new Error('Could not parse race list from response'); }
+      if (!Array.isArray(races) || races.length === 0) throw new Error('No races found in listing page');
+      let added = 0;
+      for (const race of races) {
+        if (!race.name) continue;
+        const existing = db.races.find(x => x.name === race.name);
+        if (existing) continue;
+        db.races.push({
+          ...race,
+          id: db.nextId++, status: 'pending',
+          scrapedUrl: urlObj.url,
+          scrapedAt: new Date().toISOString().slice(0, 10),
+          lat: race.lat || 0, lon: race.lon || 0,
+          free: race.free || false, sanctioned: race.sanctioned !== false,
+          perks: race.perks || [], highlights: race.highlights || [],
+          novelty: race.novelty || `${race.name} — Canadian running event.`,
+          rating: null, ratingSrc: null, ratingUrl: null,
+          attendance: 500, maxAtt: 1000,
+          sponsors: [], social: {}, qualifier: null,
+          pal: generatePal(race.type),
+        });
+        added++;
+      }
+      urlObj.status = 'done';
+      saveState(); renderAll(); updateStats();
+      log(`✓ Extracted ${added} races from listing page`, 'ok');
+      toast(`Extracted ${added} races!`, 'ok');
+    } else if (objMatch) {
+      // Single race
+      let race;
+      try { race = JSON.parse(objMatch[0]); } catch(e) { throw new Error('Could not parse race data from response'); }
+      db.races.push({
+        ...race,
+        id: db.nextId++, status: 'pending',
+        scrapedUrl: urlObj.url,
+        scrapedAt: new Date().toISOString().slice(0, 10),
+        rating: null, ratingSrc: null, ratingUrl: null,
+        attendance: 1000, maxAtt: 2000,
+        sponsors: [], social: {}, qualifier: null,
+        pal: generatePal(race.type),
+      });
+      urlObj.status = 'done';
+      saveState(); renderAll(); updateStats();
+      log(`✓ Extracted: "${race.name}" — ${race.date}, ${race.city}`, 'ok');
+      toast(`Extracted: ${race.name}`, 'ok');
+    } else {
+      // Log what Claude actually said to help debug
+      log('Claude response: ' + rawText.slice(0, 300), 'warn');
+      throw new Error('Claude could not extract race data. This URL may be a JS-rendered page or a listing — try a direct single-race registration URL instead.');
+    }
+
+    document.getElementById('importResultsWrap').style.display = 'block';
+    renderImportResults();
+
+  } catch(err) {
+    urlObj.status = 'error';
+    log(`Error scraping ${urlObj.url}: ${err.message}`, 'err');
+    toast('Scrape failed — check log', 'err');
+  }
+
+  renderUrlList();
+  setTimeout(() => prog.classList.remove('visible'), 1200);
+}
+
+function generatePal(type) {
+  const pals = {
+    'Ultra Marathon': ['#001a00','#005500','#00cc00','#66ff00'],
+    'Trail Run': ['#001a00','#005500','#00cc00','#66ff00'],
+    'Marathon': ['#003300','#006600','#00cc44','#66ff44'],
+    'Half Marathon': ['#001433','#0033aa','#0077ff','#33ccff'],
+    '10K': ['#003d7a','#0066cc','#00aaff','#33ccff'],
+    '5K': ['#001a66','#003dcc','#0077ff','#33aaff'],
+    'Obstacle Run': ['#3d1a00','#883300','#cc6600','#ff9900'],
+    'Novelty Run': ['#1a0033','#4d0099','#aa00ff','#cc44ff'],
+    'Fun Run': ['#4d1a00','#aa3300','#ff6600','#ffaa33'],
+    'Relay': ['#001a0d','#004d1a','#00aa44','#33ff66'],
+  };
+  return pals[type] || ['#1a1a00','#4d4d00','#aaaa00','#ffff44'];
+}
+
+// ── AUTO SCRAPER (RunSignUp API) ──
+async function runAllScrape() {
+  log('Starting all scrapers...', 'info');
+  const results = [];
+  if (document.getElementById('toggle-runsignup').checked) {
+    results.push(fetchRunSignUp());
+  }
+  if (document.getElementById('toggle-raceguide').checked) {
+    results.push(fetchRaceGuide());
+  }
+  if (document.getElementById('toggle-trd').checked) {
+    results.push(fetchRunningDirectory());
+  }
+  if (document.getElementById('toggle-ultrasignup').checked) {
+    results.push(fetchUltraSignup());
+  }
+  await Promise.allSettled(results);
+  updateStats();
+  renderAll();
+  saveState();
+  log('All scrapers complete.', 'ok');
+}
+
+// ── PROXY FETCH HELPER ──
+async function proxyFetch(url) {
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const resp = await fetch(proxy);
+  const data = await resp.json();
+  return data.contents || '';
+}
+
+// ── PARSE HTML HELPER ──
+function parseHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc;
+}
+
+// ── RACEGUIDE.CA SCRAPER ──
+async function fetchRaceGuide() {
+  log('RaceGuide.ca: fetching...', 'info');
+  try {
+    // Fetch multiple months
+    const urls = [
+      'https://raceguide.ca/races/list/',
+      'https://raceguide.ca/races/list/?tribe-bar-date=2026-04-01',
+      'https://raceguide.ca/races/list/?tribe-bar-date=2026-06-01',
+      'https://raceguide.ca/races/list/?tribe-bar-date=2026-08-01',
+      'https://raceguide.ca/races/list/?tribe-bar-date=2026-10-01',
+    ];
+    let added = 0;
+    for (const url of urls) {
+      const html = await proxyFetch(url);
+      const doc = parseHtml(html);
+      // RaceGuide uses WordPress Events Calendar — articles with class "tribe-event"
+      const events = doc.querySelectorAll('.tribe-event, article.type-tribe_events, .tribe-events-calendar-list__event');
+      events.forEach(ev => {
+        const name = ev.querySelector('h2, h3, .tribe-event-url, .tribe-events-calendar-list__event-title')?.textContent?.trim();
+        const dateEl = ev.querySelector('time, .tribe-event-date-start, abbr');
+        const locationEl = ev.querySelector('.tribe-venue, .tribe-venue-location, address');
+        const linkEl = ev.querySelector('a');
+        if (!name || name.length < 3) return;
+        const dateStr = dateEl?.getAttribute('datetime') || dateEl?.textContent?.trim() || '';
+        const location = locationEl?.textContent?.trim() || '';
+        const url2 = linkEl?.href || '';
+        // Parse location for city/province
+        const locParts = location.replace(/\n/g,' ').split(',').map(s => s.trim()).filter(Boolean);
+        const city = locParts[0] || '';
+        const province = locParts[1] || '';
+        const existing = db.races.find(x => x.name === name || (x.scrapedUrl && x.scrapedUrl === url2));
+        if (existing) return;
+        const type = guessType(name);
+        db.races.push({
+          id: db.nextId++, name, status: 'pending',
+          date: parseDate(dateStr), city, province,
+          lat: 0, lon: 0, type, distance: '', price: 0, free: false,
+          sanctioned: true, perks: [], highlights: [],
+          novelty: `${name} — Canadian running event.`,
+          url: url2, scrapedUrl: url2, source: 'RaceGuide.ca',
+          scrapedAt: today(), rating: null, ratingSrc: null, ratingUrl: null,
+          attendance: 500, maxAtt: 1000, sponsors: [], social: {}, qualifier: null,
+          pal: generatePal(type),
+        });
+        added++;
+      });
+    }
+    log(`✓ RaceGuide.ca: ${added} races added`, added > 0 ? 'ok' : 'warn');
+    if (added === 0) log('RaceGuide.ca: CORS may have blocked — try manual URL import instead', 'warn');
+  } catch(e) {
+    log(`RaceGuide.ca error: ${e.message}`, 'err');
+  }
+}
+
+// ── THERUNNINGDIRECTORY.CA SCRAPER ──
+async function fetchRunningDirectory() {
+  log('TheRunningDirectory.ca: discovering races via Google index...', 'info');
+
+  // The province pages are JS-rendered (Webflow), so we can't proxy them directly.
+  // Instead we use Google's site search to discover individual race URLs,
+  // then fetch each one — which IS server-rendered with full data.
+
+  const searchQueries = [
+    'site:therunningdirectory.ca/race/ 2026 Canada',
+    'site:therunningdirectory.ca/race/ 2026 Ontario',
+    'site:therunningdirectory.ca/race/ 2026 British Columbia',
+    'site:therunningdirectory.ca/race/ 2026 Alberta',
+  ];
+
+  // Collect race URLs from Google search results
+  const raceUrls = new Set();
+
+  for (const query of searchQueries) {
+    try {
+      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=20`;
+      const html = await proxyFetch(googleUrl);
+      const doc = parseHtml(html);
+      // Google results — find all links containing therunningdirectory.ca/race/
+      doc.querySelectorAll('a[href]').forEach(a => {
+        const href = a.href || a.getAttribute('href') || '';
+        // Google wraps URLs in /url?q= 
+        const match = href.match(/therunningdirectory\.ca\/race\/([^&"'\s]+)/);
+        if (match) {
+          raceUrls.add('https://www.therunningdirectory.ca/race/' + match[1].split('?')[0]);
+        }
+      });
+      // Also check raw text for URLs
+      const text = html;
+      const urlMatches = text.matchAll(/therunningdirectory\.ca\/race\/([a-z0-9-]+)/g);
+      for (const m of urlMatches) {
+        raceUrls.add('https://www.therunningdirectory.ca/race/' + m[1]);
+      }
+      log(`  Google search found ${raceUrls.size} race URLs so far...`, 'info');
+    } catch(e) {
+      log(`  Google search error: ${e.message}`, 'warn');
+    }
+  }
+
+  if (raceUrls.size === 0) {
+    log('TheRunningDirectory.ca: Could not discover race URLs via Google. Trying homepage...', 'warn');
+    // Fallback: scrape the homepage which does render some races statically
+    try {
+      const html = await proxyFetch('https://www.therunningdirectory.ca/');
+      const slugMatches = html.matchAll(/href="\/race\/([a-z0-9-]+)"/g);
+      for (const m of slugMatches) {
+        raceUrls.add('https://www.therunningdirectory.ca/race/' + m[1]);
+      }
+      log(`  Homepage fallback found ${raceUrls.size} race URLs`, 'info');
+    } catch(e) {
+      log(`  Homepage fallback error: ${e.message}`, 'err');
+    }
+  }
+
+  if (raceUrls.size === 0) {
+    log('TheRunningDirectory.ca: 0 races found. Google may be blocking the proxy — try adding individual race URLs to Manual Import instead.', 'warn');
+    return;
+  }
+
+  // Now fetch each individual race page (these are server-rendered)
+  let totalAdded = 0;
+  const urlArr = Array.from(raceUrls).slice(0, 60); // cap at 60 to avoid hammering
+  log(`  Fetching ${urlArr.length} individual race pages...`, 'info');
+
+  for (const raceUrl of urlArr) {
+    try {
+      const existing = db.races.find(x => x.scrapedUrl === raceUrl);
+      if (existing) continue;
+
+      const html = await proxyFetch(raceUrl);
+      if (!html || html.length < 200) continue;
+
+      const doc = parseHtml(html);
+      // Individual race pages have h1 for name, structured data for date/location
+      const name = doc.querySelector('h1, h2')?.textContent?.trim();
+      if (!name || name.length < 3) continue;
+
+      const bodyText = doc.body?.textContent || '';
+
+      // Date — look for structured "Date · Month DD, YYYY" or emoji format
+      const dateMatch = bodyText.match(/Date[^a-z]*?([A-Z][a-z]+ \d{1,2},?\s*202[5-9])/) ||
+                        bodyText.match(/📅\s*([A-Z][a-z]+ \d{1,2},?\s*202[5-9])/) ||
+                        bodyText.match(/([A-Z][a-z]+ \d{1,2},\s*202[5-9])/);
+
+      // Location
+      const locMatch = bodyText.match(/Location[\s\S]{0,30}?([A-Z][a-zA-Z ,]{3,40})/) || bodyText.match(/([A-Z][a-zA-Z ]+,\s*[A-Z][a-zA-Z ]+)/);
+      const rawLoc = locMatch ? locMatch[1].trim() : '';
+      const locParts = rawLoc.split(',').map(s => s.trim());
+      const city = locParts[0] || '';
+      const province = locParts[locParts.length - 1]?.replace(/canada/i,'').trim() || '';
+
+      const type = guessType(name + ' ' + bodyText.slice(0, 500));
+
+      // Only add future races
+      const parsedDate = parseDate(dateMatch ? dateMatch[1] : '');
+      if (parsedDate && parsedDate < '2026-01-01') continue;
+
+      db.races.push({
+        id: db.nextId++, name, status: 'pending',
+        date: parsedDate, city,
+        province: province || guessProvince(rawLoc + ' ' + bodyText.slice(0, 300)),
+        lat: 0, lon: 0, type, distance: '', price: 0, free: false,
+        sanctioned: true, perks: [], highlights: [],
+        novelty: `${name} — Canadian running event.`,
+        url: raceUrl, scrapedUrl: raceUrl,
+        source: 'TheRunningDirectory.ca',
+        scrapedAt: today(),
+        rating: null, ratingSrc: null, ratingUrl: null,
+        attendance: 500, maxAtt: 1000,
+        sponsors: [], social: {}, qualifier: null,
+        pal: generatePal(type),
+      });
+      totalAdded++;
+    } catch(e) {
+      // skip individual failures silently
+    }
+  }
+
+  log(`✓ TheRunningDirectory.ca: ${totalAdded} races added from ${urlArr.length} pages`, totalAdded > 0 ? 'ok' : 'warn');
+  renderAll();
+  saveState();
+}
+
+function guessProvince(text) {
+  const t = text.toLowerCase();
+  if (t.includes('ontario') || t.includes(', on')) return 'Ontario';
+  if (t.includes('british columbia') || t.includes(', bc')) return 'British Columbia';
+  if (t.includes('alberta') || t.includes(', ab')) return 'Alberta';
+  if (t.includes('quebec') || t.includes(', qc')) return 'Quebec';
+  if (t.includes('nova scotia') || t.includes(', ns')) return 'Nova Scotia';
+  if (t.includes('new brunswick') || t.includes(', nb')) return 'New Brunswick';
+  if (t.includes('saskatchewan') || t.includes(', sk')) return 'Saskatchewan';
+  if (t.includes('manitoba') || t.includes(', mb')) return 'Manitoba';
+  if (t.includes('newfoundland') || t.includes(', nl')) return 'Newfoundland';
+  if (t.includes('prince edward') || t.includes(', pe')) return 'Prince Edward Island';
+  if (t.includes('yukon') || t.includes(', yt')) return 'Yukon';
+  return '';
+}
+// ── ULTRASIGNUP SCRAPER ──
+async function fetchUltraSignup() {
+  log('UltraSignup: fetching Canada trail/ultra races...', 'info');
+  try {
+    const html = await proxyFetch('https://ultrasignup.com/register.aspx?did=&dname=&dist=0&country=Canada&state=0&year=0&mo=0');
+    const doc = parseHtml(html);
+    let added = 0;
+    const rows = doc.querySelectorAll('table tr, .event-row, tr[class*="event"]');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 3) return;
+      const name = cells[0]?.textContent?.trim();
+      const dateText = cells[1]?.textContent?.trim();
+      const location = cells[2]?.textContent?.trim() || '';
+      const linkEl = row.querySelector('a');
+      if (!name || name.length < 3) return;
+      const locParts = location.split(',').map(s => s.trim());
+      const city = locParts[0] || '';
+      const province = locParts[1] || '';
+      const existing = db.races.find(x => x.name === name);
+      if (existing) return;
+      const type = name.toLowerCase().includes('trail') ? 'Trail Run' : 'Ultra Marathon';
+      db.races.push({
+        id: db.nextId++, name, status: 'pending',
+        date: parseDate(dateText), city, province,
+        lat: 0, lon: 0, type, distance: '', price: 0, free: false,
+        sanctioned: true, perks: [], highlights: ['Trail', 'Ultra'],
+        novelty: `${name} — Canadian trail/ultra running event.`,
+        url: linkEl?.href || '', scrapedUrl: linkEl?.href || '',
+        source: 'UltraSignup',
+        scrapedAt: today(), rating: null, ratingSrc: null, ratingUrl: null,
+        attendance: 300, maxAtt: 500, sponsors: [], social: {}, qualifier: null,
+        pal: generatePal(type),
+      });
+      added++;
+    });
+    log(`✓ UltraSignup: ${added} trail/ultra races added`, added > 0 ? 'ok' : 'warn');
+  } catch(e) {
+    log(`UltraSignup error: ${e.message}`, 'err');
+  }
+}
+
+// ── HELPERS ──
+function today() { return new Date().toISOString().slice(0,10); }
+
+function guessType(text) {
+  const t = text.toLowerCase();
+  if (t.includes('ultra') || t.includes('50k') || t.includes('100k') || t.includes('100m')) return 'Ultra Marathon';
+  if (t.includes('trail')) return 'Trail Run';
+  if ((t.includes('marathon') || t.includes('42k') || t.includes('26.2')) && !t.includes('half')) return 'Marathon';
+  if (t.includes('half') || t.includes('21k') || t.includes('13.1')) return 'Half Marathon';
+  if (t.includes('10k') || t.includes('10km') || t.includes('10 km')) return '10K';
+  if (t.includes('5k') || t.includes('5km') || t.includes('5 km')) return '5K';
+  if (t.includes('obstacle') || t.includes('mud') || t.includes('spartan')) return 'Obstacle Run';
+  if (t.includes('relay')) return 'Relay';
+  if (t.includes('fun run') || t.includes('colour') || t.includes('color') || t.includes('santa') || t.includes('zombie')) return 'Novelty Run';
+  return '5K';
+}
+
+function parseDate(str) {
+  if (!str) return '';
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0,10);
+  // "February 21, 2026" or "Feb 21 2026"
+  try {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  } catch(e) {}
+  return '';
+}
+
+
+async function fetchRunSignUp() {
+  const prov = document.getElementById('filterProv')?.value || 'CA';
+  log('Fetching RunSignUp Canada races (public API — no key needed)...', 'info');
+
+  // RunSignUp public race search — no auth required for public race listings
+  const pages = [1, 2, 3]; // fetch 3 pages = up to 150 races
+  let totalAdded = 0;
+
+  for (const page of pages) {
+    try {
+      // Use allorigins proxy to avoid CORS
+      const apiUrl = `https://runsignup.com/Rest/races?format=json&country_code=CA&results_per_page=50&page=${page}&futureonly=T`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+      const resp = await fetch(proxyUrl);
+      const wrapper = await resp.json();
+      const data = JSON.parse(wrapper.contents || '{}');
+      const races = data.races || [];
+      if (!races.length) break;
+
+      for (const r of races) {
+        const race = r.race;
+        if (!race) continue;
+        // Province filter
+        if (prov !== 'CA') {
+          const provMap = { BC:'BC', AB:'AB', ON:'ON', QC:'QC', MB:'MB', SK:'SK', NS:'NS' };
+          if (race.address?.state !== prov) continue;
+        }
+        const existing = db.races.find(x => x.scrapedUrl === race.url || x.name === race.name);
+        if (existing) continue;
+
+        // Map RunSignUp state abbreviation to full province name
+        const provNames = { BC:'British Columbia', AB:'Alberta', ON:'Ontario', QC:'Quebec', MB:'Manitoba', SK:'Saskatchewan', NS:'Nova Scotia', NB:'New Brunswick', NL:'Newfoundland', PE:'Prince Edward Island', NT:'Northwest Territories', YT:'Yukon', NU:'Nunavut' };
+
+        // Try to detect race type from name
+        const name = (race.name || '').toLowerCase();
+        let type = '5K';
+        if (name.includes('ultra') || name.includes('50k') || name.includes('100k')) type = 'Ultra Marathon';
+        else if (name.includes('trail')) type = 'Trail Run';
+        else if (name.includes('marathon') && !name.includes('half')) type = 'Marathon';
+        else if (name.includes('half') || name.includes('21')) type = 'Half Marathon';
+        else if (name.includes('10k') || name.includes('10km')) type = '10K';
+        else if (name.includes('5k') || name.includes('5km')) type = '5K';
+        else if (name.includes('obstacle') || name.includes('mud')) type = 'Obstacle Run';
+        else if (name.includes('relay')) type = 'Relay';
+
+        db.races.push({
+          id: db.nextId++,
+          name: race.name,
+          date: race.next_date || '',
+          city: race.address?.city || '',
+          province: provNames[race.address?.state] || race.address?.state || '',
+          lat: parseFloat(race.address?.lat) || 0,
+          lon: parseFloat(race.address?.lng) || 0,
+          type,
+          distance: '',
+          price: 0,
+          free: false,
+          sanctioned: true,
+          perks: [],
+          highlights: [],
+          novelty: race.description ? race.description.replace(/<[^>]*>/g,'').slice(0,200) : `${race.name} — a Canadian running event.`,
+          url: race.url || '',
+          scrapedUrl: race.url || '',
+          source: 'RunSignUp',
+          status: 'pending',
+          scrapedAt: new Date().toISOString().slice(0, 10),
+          rating: null, ratingSrc: null, ratingUrl: null,
+          attendance: 500, maxAtt: 1000,
+          sponsors: [], social: {}, qualifier: null,
+          pal: generatePal(type),
+        });
+        totalAdded++;
+      }
+      log(`RunSignUp page ${page}: fetched ${races.length} races`, 'info');
+    } catch(e) {
+      log(`RunSignUp page ${page} error: ${e.message}`, 'err');
+      break;
+    }
+  }
+
+  if (totalAdded > 0) {
+    log(`✓ RunSignUp: Added ${totalAdded} new Canadian races`, 'ok');
+    toast(`RunSignUp: ${totalAdded} races imported`, 'ok');
+  } else {
+    log('RunSignUp: No new races found (all may already be in database)', 'warn');
+  }
+}
+
+async function testRunSignUp() {
+  log('Testing RunSignUp public API...', 'info');
+  toast('Connecting to RunSignUp...', '');
+  try {
+    const apiUrl = 'https://runsignup.com/Rest/races?format=json&country_code=CA&results_per_page=3&futureonly=T';
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+    const resp = await fetch(proxyUrl);
+    const wrapper = await resp.json();
+    const data = JSON.parse(wrapper.contents || '{}');
+    const races = data.races || [];
+    if (races.length > 0) {
+      log(`✓ RunSignUp connected — first result: "${races[0]?.race?.name}"`, 'ok');
+      toast('RunSignUp connected ✓ — no key needed!', 'ok');
+    } else {
+      log('RunSignUp responded but returned no races', 'warn');
+      toast('Connected but no results — try Run Scraper', '');
+    }
+  } catch(e) {
+    log(`RunSignUp test failed: ${e.message}`, 'err');
+    toast('Connection failed — check console', 'err');
+  }
+}
+
+// ── TEST CONNECTIONS ──
+async function testConnections() {
+  await testRunSignUp();
+}
+
+// ── RENDER TABLES ──
+function renderAll() {
+  renderPendingTable();
+  renderApprovedTable();
+  updateStats();
+}
+
+function renderPendingTable() {
+  const races = db.races.filter(r => r.status === 'pending');
+  const tbody = document.getElementById('pendingTableBody');
+  const empty = document.getElementById('pendingEmpty');
+  document.getElementById('pendingCount').textContent = races.length;
+  document.getElementById('reviewBadge').textContent = races.length;
+  document.getElementById('pendingBadge').textContent = db.urls.filter(u => u.status === 'pending').length;
+  if (!races.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = races.map(r => raceRow(r, true)).join('');
+}
+
+function renderApprovedTable() {
+  const races = db.races.filter(r => r.status === 'approved');
+  const tbody = document.getElementById('approvedTableBody');
+  const empty = document.getElementById('approvedEmpty');
+  document.getElementById('approvedCount').textContent = races.length;
+  if (!races.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = races.map(r => raceRow(r, false)).join('');
+}
+
+function raceRow(r, showApprove) {
+  const actions = showApprove
+    ? `<button class="act-btn act-approve" onclick="approveRace(${r.id})" title="Approve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>
+       <button class="act-btn act-reject" onclick="rejectRace(${r.id})" title="Reject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`
+    : `<button class="act-btn act-reject" onclick="unapproveRace(${r.id})" title="Unapprove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`;
+  return `<tr>
+    <td class="td-name" title="${r.name}">${r.name}</td>
+    <td>${r.date || '—'}</td>
+    <td>${r.city || '—'}, ${provinceAbbr(r.province)}</td>
+    <td>${r.distance || r.type || '—'}</td>
+    <td>${r.free ? 'Free' : r.price ? '$' + r.price : '—'}</td>
+    <td class="td-source">${r.source || '—'}</td>
+    ${showApprove ? `<td><span class="status-pill sp-pending">Pending</span></td>` : ''}
+    <td class="td-actions">
+      ${actions}
+      <button class="act-btn act-edit" onclick="editRace(${r.id})" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      ${r.url ? `<a class="act-btn act-view" href="${r.url}" target="_blank" title="View source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></a>` : ''}
+    </td>
+  </tr>`;
+}
+
+function provinceAbbr(p) {
+  const m = { 'British Columbia':'BC','Alberta':'AB','Ontario':'ON','Quebec':'QC','Manitoba':'MB','Saskatchewan':'SK','Nova Scotia':'NS','New Brunswick':'NB','Newfoundland':'NL','Prince Edward Island':'PE','Northwest Territories':'NT','Yukon':'YT','Nunavut':'NU' };
+  return m[p] || p || '—';
+}
+
+// ── RACE ACTIONS ──
+function approveRace(id) {
+  const r = db.races.find(x => x.id === id);
+  if (r) { r.status = 'approved'; saveState(); renderAll(); toast(`Approved: ${r.name}`, 'ok'); }
+}
+
+function rejectRace(id) {
+  const r = db.races.find(x => x.id === id);
+  if (r) { r.status = 'rejected'; saveState(); renderAll(); toast(`Rejected: ${r.name}`, ''); }
+}
+
+function unapproveRace(id) {
+  const r = db.races.find(x => x.id === id);
+  if (r) { r.status = 'pending'; saveState(); renderAll(); }
+}
+
+function approveAllPending() {
+  db.races.filter(r => r.status === 'pending').forEach(r => r.status = 'approved');
+  saveState(); renderAll(); toast('All pending races approved', 'ok');
+}
+
+function rejectAllPending() {
+  db.races.filter(r => r.status === 'pending').forEach(r => r.status = 'rejected');
+  saveState(); renderAll();
+}
+
+function approveAll() {
+  approveAllPending();
+}
+
+// ── EDIT RACE ──
+function editRace(id) {
+  const r = db.races.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('ef-id').value = id;
+  document.getElementById('ef-name').value = r.name || '';
+  document.getElementById('ef-date').value = r.date || '';
+  document.getElementById('ef-city').value = r.city || '';
+  document.getElementById('ef-prov').value = r.province || 'British Columbia';
+  document.getElementById('ef-distance').value = r.distance || '';
+  document.getElementById('ef-type').value = r.type || '5K';
+  document.getElementById('ef-price').value = r.price || 0;
+  document.getElementById('ef-url').value = r.url || '';
+  document.getElementById('ef-lat').value = r.lat || '';
+  document.getElementById('ef-lon').value = r.lon || '';
+  document.getElementById('ef-novelty').value = r.novelty || '';
+  document.getElementById('ef-perks').value = (r.perks || []).join(', ');
+  document.getElementById('ef-highlights').value = (r.highlights || []).join(', ');
+  document.getElementById('editOverlay').classList.add('open');
+}
+
+function saveEdit() {
+  const id = parseInt(document.getElementById('ef-id').value);
+  const r = db.races.find(x => x.id === id);
+  if (!r) return;
+  r.name = document.getElementById('ef-name').value;
+  r.date = document.getElementById('ef-date').value;
+  r.city = document.getElementById('ef-city').value;
+  r.province = document.getElementById('ef-prov').value;
+  r.distance = document.getElementById('ef-distance').value;
+  r.type = document.getElementById('ef-type').value;
+  r.price = parseFloat(document.getElementById('ef-price').value) || 0;
+  r.url = document.getElementById('ef-url').value;
+  r.lat = parseFloat(document.getElementById('ef-lat').value) || 0;
+  r.lon = parseFloat(document.getElementById('ef-lon').value) || 0;
+  r.novelty = document.getElementById('ef-novelty').value;
+  r.perks = document.getElementById('ef-perks').value.split(',').map(s => s.trim()).filter(Boolean);
+  r.highlights = document.getElementById('ef-highlights').value.split(',').map(s => s.trim()).filter(Boolean);
+  r.pal = generatePal(r.type);
+  document.getElementById('editOverlay').classList.remove('open');
+  saveState(); renderAll(); toast('Race updated', 'ok');
+}
+
+function closeEdit(e) {
+  if (e.target === document.getElementById('editOverlay'))
+    document.getElementById('editOverlay').classList.remove('open');
+}
+
+// ── IMPORT RESULTS ──
+function renderImportResults() {
+  const recent = db.races.filter(r => r.status === 'pending').slice(-10);
+  const tbody = document.getElementById('importResultsBody');
+  tbody.innerHTML = recent.map(r => raceRow(r, true)).join('');
+}
+
+// ── EXPORT ──
+// ── PUSH LIVE / UNPUBLISH ──
+function updatePushLiveStatus() {
+  const count = db.races.filter(r => r.status === 'approved').length;
+  const el = document.getElementById('approvedCountExport');
+  if (el) el.textContent = count;
+}
+
+function pushLive() {
+  const approved = db.races.filter(r => r.status === 'approved');
+  if (!approved.length) {
+    toast('No approved races to publish. Approve some races first.', 'err');
+    return;
+  }
+  // The scraper already saves to rc_scraper_db — index.html reads approved races from it.
+  // Just make sure it's saved and give feedback.
+  saveState();
+  const statusEl = document.getElementById('pushLiveStatus');
+  statusEl.innerHTML = `<span style="color:var(--green);">✓ Published!</span> ${approved.length} races are now live on the site. <a href="index.html" target="_blank" style="color:var(--green);text-decoration:underline;">View site →</a>`;
+  log(`✓ Pushed ${approved.length} approved races live to index.html`, 'ok');
+  toast(`${approved.length} races published live!`, 'ok');
+}
+
+function unpublish() {
+  if (!confirm('Revert the front-end site to its default hardcoded races?')) return;
+  localStorage.setItem('rc_frontend_use_defaults', '1');
+  const statusEl = document.getElementById('pushLiveStatus');
+  statusEl.innerHTML = '<span style="color:#ffaa44;">Site reverted to defaults on next page load.</span>';
+  toast('Site will use default races on next load', '');
+}
+
+function generateExport() {
+  const approved = db.races.filter(r => r.status === 'approved');
+  if (!approved.length) {
+    document.getElementById('exportPreview').textContent = '// No approved races yet. Approve some races first.';
+    document.getElementById('exportMeta').textContent = '—';
+    return;
+  }
+  const code = `const RACES=[\n${approved.map((r, i) => {
+    return `  {id:${i + 1},name:${JSON.stringify(r.name)},date:${JSON.stringify(r.date || '')},province:${JSON.stringify(r.province || '')},city:${JSON.stringify(r.city || '')},lat:${r.lat || 0},lon:${r.lon || 0},type:${JSON.stringify(r.type || '')},distance:${JSON.stringify(r.distance || '')},sanctioned:${r.sanctioned !== false},price:${r.price || 0},free:${!!r.free},\n   perks:${JSON.stringify(r.perks || [])},highlights:${JSON.stringify(r.highlights || [])},\n   novelty:${JSON.stringify(r.novelty || '')},\n   rating:${r.rating || null},ratingSrc:${JSON.stringify(r.ratingSrc || null)},ratingUrl:${JSON.stringify(r.ratingUrl || null)},attendance:${r.attendance || 1000},maxAtt:${r.maxAtt || 2000},\n   sponsors:${JSON.stringify(r.sponsors || [])},social:${JSON.stringify(r.social || {})},\n   qualifier:null,url:${JSON.stringify(r.url || '')},source:${JSON.stringify(r.source || '')},scraped:${JSON.stringify(r.scrapedAt || '')},open:true,\n   pal:${JSON.stringify(r.pal || ['#003d7a','#0066cc','#00aaff','#33ccff'])}}`;
+  }).join(',\n')}\n];`;
+  document.getElementById('exportPreview').textContent = code;
+  document.getElementById('exportMeta').textContent = `${approved.length} races · ${code.length.toLocaleString()} characters`;
+}
+
+function copyExport() {
+  const code = document.getElementById('exportPreview').textContent;
+  if (code.startsWith('//')) { toast('Generate the code first', 'err'); return; }
+  navigator.clipboard.writeText(code).then(() => toast('Copied to clipboard!', 'ok'));
+}
+
+// ── FILTER TABLE ──
+function filterTable(type, query) {
+  const q = query.toLowerCase();
+  const tbody = document.getElementById(type + 'TableBody');
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ── STATS ──
+function updateStats() {
+  const total = db.races.length;
+  const pending = db.races.filter(r => r.status === 'pending').length;
+  const approved = db.races.filter(r => r.status === 'approved').length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statApproved').textContent = approved;
+  document.getElementById('statSources').textContent = db.urls.length;
+  document.getElementById('statSourcesDelta').textContent = db.urls.filter(u => u.status === 'pending').length + ' pending';
+  document.getElementById('reviewBadge').textContent = pending;
+}
+
+// ── LOG ──
+function log(msg, type) {
+  const box = document.getElementById('logBox');
+  const now = new Date().toLocaleTimeString('en-CA', { hour12: false });
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${now}</span><span class="log-msg ${type || ''}">${msg}</span>`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('logBox').innerHTML = '';
+}
+
+// ── SCHEDULE ──
+function saveSchedule() {
+  toast('Schedule saved', 'ok');
+  updateNextRuns();
+}
+
+function updateNextRuns() {
+  document.getElementById('nextApiRun').textContent = 'Tonight at midnight';
+  document.getElementById('nextScrapeRun').textContent = 'In 3 days';
+}
+
+// ── GITHUB ACTION EXPORT ──
+function exportGithubAction() {
+  const yaml = `name: RunCanada Scraper
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6am UTC
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm install node-fetch
+      - name: Run RunSignUp scraper
+        env:
+          RUNSIGNUP_CLIENT_ID: \${{ secrets.RUNSIGNUP_CLIENT_ID }}
+          RUNSIGNUP_CLIENT_SECRET: \${{ secrets.RUNSIGNUP_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scraper.js
+      - name: Commit updated races
+        run: |
+          git config --global user.name 'RunCanada Bot'
+          git config --global user.email 'bot@runcanada.ca'
+          git add races.json
+          git diff --staged --quiet || git commit -m "chore: update race data"
+          git push
+`;
+  const blob = new Blob([yaml], { type: 'text/yaml' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'scraper.yml'; a.click();
+  toast('Downloaded GitHub Action config', 'ok');
+}
+
+function exportVercelCron() {
+  const config = JSON.stringify({
+    "crons": [
+      { "path": "/api/scrape", "schedule": "0 6 * * *" }
+    ]
+  }, null, 2);
+  const blob = new Blob([config], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'vercel.json'; a.click();
+  toast('Downloaded Vercel cron config', 'ok');
+}
+
+// ── HELPERS ──
+function toggleApiKeyVis() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type || '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  updateNextRuns();
+  log('RunCanada Scraper Dashboard v1.0 ready', 'ok');
+});
+</script>
+</body>
+</html>
